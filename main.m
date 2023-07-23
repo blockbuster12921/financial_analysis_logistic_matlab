@@ -29,6 +29,7 @@ test_table = shuffled_table(num_train+1:end, :);
 
 % Show the number of rows and columns in the input table, train table, test
 % table
+disp('Task1 Result:')
 disp(size(input_table));
 disp(size(train_table));
 disp(size(test_table));
@@ -37,6 +38,11 @@ disp(size(test_table));
 % Do a preliminary covariance analysis on all variables. Plot the heatmap to show the
 % correlation structure of all variables. Clean the data if necessary. Briefly comment on
 % your findings
+
+cor = corrcoef(table2array(train_table));
+heatmap(cor);
+disp(max(cor(1, :)));
+disp(min(cor(1, :)));
 
 %% Task3
 % Use the training sample and a simple logistic regression model, including all
