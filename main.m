@@ -40,7 +40,19 @@ disp(size(test_table));
 % your findings
 
 cor = corrcoef(table2array(train_table));
-heatmap(cor);
+
+% Create the heatmap
+h = heatmap(cor);
+
+% Set the PaperPosition property of the figure
+set(gcf, 'PaperPosition', [0, 0, 100, 75]);
+
+% Add a title
+title('Correlation plot');
+
+% Save the heatmap as an image
+saveas(h, 'corrcoef.png');
+
 disp(max(cor(1, :)));
 disp(min(cor(1, :)));
 
@@ -114,7 +126,11 @@ y_train = categorical(table2array(train_table(:, 1)));
 X_test = table2array(test_table(:, 2:end));
 y_test = categorical(table2array(test_table(:, 1)));
 
-treeMdl = fitctree(X_train, y_train);
+% treeMdl = fitctree(X_train, y_train);
+t = templateTree('MaxNumSplits', 10);
+treeMdl = fitcensemble(X_train, y_train, 'Method', 'AdaBoostM1', 'Learners', t);
+
+% Predict the result for the test data
 predictions = predict(treeMdl, X_test);
 
 % Calculating accuracy rate
@@ -125,27 +141,27 @@ fprintf('Accuracy Rate: %.2f%%\n', accuracy * 100);
 confusionMatrix = confusionmat(y_test, predictions);
 disp(confusionMatrix);
 
-%% Task6
-% Use a random forest to train the model and then, similarly, report the OOS
-% confusion matrix and the accuracy rate.
-
-% Split the data into X_train, y_train, X_test, y_test
-X_train = table2array(train_table(:, 2:end));
-y_train = categorical(table2array(train_table(:, 1)));
-X_test = table2array(test_table(:, 2:end));
-y_test = categorical(table2array(test_table(:, 1)));
-
-t = templateTree('MaxNumSplits', 5, 'PredictorSelection','interaction-curvature','Reproducible', true);
-rfMdl = fitcensemble(X_train, y_train, 'Method', 'Bag', 'NumLearningCycles', 50, 'Learners', t);
-predictions = predict(boostMdl, X_test);
-
-% Calculating accuracy rate
-accuracy = sum(predictions == y_test) / numel(y_test);
-fprintf('Accuracy Rate: %.2f%%\n', accuracy * 100);
-
-% Calculating confusion matrix
-confusionMatrix = confusionmat(y_test, predictions);
-disp(confusionMatrix);
+% %% Task6
+% % Use a random forest to train the model and then, similarly, report the OOS
+% % confusion matrix and the accuracy rate.
+% 
+% % Split the data into X_train, y_train, X_test, y_test
+% X_train = table2array(train_table(:, 2:end));
+% y_train = categorical(table2array(train_table(:, 1)));
+% X_test = table2array(test_table(:, 2:end));
+% y_test = categorical(table2array(test_table(:, 1)));
+% 
+% t = templateTree('MaxNumSplits', 5, 'PredictorSelection','interaction-curvature','Reproducible', true);
+% rfMdl = fitcensemble(X_train, y_train, 'Method', 'Bag', 'NumLearningCycles', 50, 'Learners', t);
+% predictions = predict(boostMdl, X_test);
+% 
+% % Calculating accuracy rate
+% accuracy = sum(predictions == y_test) / numel(y_test);
+% fprintf('Accuracy Rate: %.2f%%\n', accuracy * 100);
+% 
+% % Calculating confusion matrix
+% confusionMatrix = confusionmat(y_test, predictions);
+% disp(confusionMatrix);
 
 %% Task7
 % Compare the results from different models. Comment on your findings.
