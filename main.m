@@ -177,7 +177,7 @@ numTrees = 300;
 rfMdl = TreeBagger(numTrees, X, 'Bankrupt_', 'Method','classification',...
     'MinLeafSize',bestHyperparameters.minLS,...
     'NumPredictorstoSample',bestHyperparameters.numPTS);
-predictions = predict(rfMdl, categorical(X_test));
+predictions = predict(rfMdl, X_test);
 
 
 disp('Task6 Result:');
@@ -187,7 +187,7 @@ accuracy_6 = sum(predictions == y_test) / numel(y_test) * 100;
 fprintf('Accuracy Rate: %.2f%%\n', accuracy_6);
 
 % Calculating confusion matrix
-confusionMatrix_6 = confusionmat(y_test, predictions);
+confusionMatrix_6 = confusionmat(y_test, categorical(predictions));
 disp(confusionMatrix_6);
 save('save.mat', 'accuracy_3', 'confusionMatrix_3', 'accuracy_4', 'confusionMatrix_4', ...
     'accuracy_5', 'confusionMatrix_5', 'accuracy_6', 'confusionMatrix_6');
