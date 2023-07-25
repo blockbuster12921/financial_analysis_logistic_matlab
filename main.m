@@ -131,10 +131,13 @@ y_train = categorical(table2array(train_table(:, 1)));
 X_test = table2array(test_table(:, 2:end));
 y_test = categorical(table2array(test_table(:, 1)));
 
-% treeMdl = fitctree(X_train, y_train);
-t = templateTree('MaxNumSplits', 10);
-treeMdl = fitcensemble(X_train, y_train, 'Method', 'AdaBoostM1', 'Learners', t);
+paramGrid = struct( ...
+    'Method', 'AdaBoostM1', ...
+    'NumLearningCycles', [50, 100, 200]);
 
+t = templateTree('MaxNumSplits', 10);
+treeMdl = fitcensemble(X_train, y_train, 'OptimizeHyperparameters','auto','Learners',t, ...
+    'HyperparameterOptimizationOptions',struct('AcquisitionFunctionName','expected-improvement-plus'));
 % Predict the result for the test data
 predictions = predict(treeMdl, X_test);
 
@@ -158,11 +161,26 @@ y_train = categorical(table2array(train_table(:, 1)));
 X_test = table2array(test_table(:, 2:end));
 y_test = categorical(table2array(test_table(:, 1)));
 
-t = templateTree('MaxNumSplits', 5, 'PredictorSelection','interaction-curvature','Reproducible', true);
-rfMdl = fitcensemble(X_train, y_train, 'Method', 'Bag', 'NumLearningCycles', 50, 'Learners', t);
+X = train_table(:, [2:end, 1]);
+maxMinLS = 20;
+minLS = optimizableVariable('minLS',[1,maxMinLS],'Type','integer');
+numPTS = optimizableVariable('numPTS',[1,size(X,2)-1],'Type','integer');
+hyperparametersRF = [minLS; numPTS];
+
+results = bayesopt(@(params)oobErrRF(params,X),hyperparametersRF,...
+    'AcquisitionFunctionName','expected-improvement-plus','Verbose',1);
+
+bestOOBErr = results.MinObjective;
+bestHyperparameters = results.XAtMinObjective;
+
+numTrees = 300;
+Mdl = TreeBagger(numTrees, X, 'Bankrupt_', 'Method','classification',...
+    'MinLeafSize',bestHyperparameters.minLS,...
+    'NumPredictorstoSample',bestHyperparameters.numPTS);
 predictions = predict(rfMdl, X_test);
 
-disp('Task6 Result:')
+
+disp('Task6 Result:');
 
 % Calculating accuracy rate
 accuracy_6 = sum(predictions == y_test) / numel(y_test) * 100;
@@ -173,6 +191,16 @@ confusionMatrix_6 = confusionmat(y_test, predictions);
 disp(confusionMatrix_6);
 save('save.mat', 'accuracy_3', 'confusionMatrix_3', 'accuracy_4', 'confusionMatrix_4', ...
     'accuracy_5', 'confusionMatrix_5', 'accuracy_6', 'confusionMatrix_6');
-%% Task7
-% Compare the results from different models. Comment on your findings.
 
+function oobErr = oobErrRF(params,X)
+    %oobErrRF Trains random forest and estimates out-of-bag quantile error
+    %   oobErr trains a random forest of 300 regression trees using the
+    %   predictor data in X and the parameter specification in params, and then
+    %   returns the out-of-bag quantile error based on the median. X is a table
+    %   and params is an array of OptimizableVariable objects corresponding to
+    %   the minimum leaf size and number of predictors to sample at each node.
+    randomForest = TreeBagger(300,X,'Bankrupt_','Method','classification',...
+        'OOBPrediction','on','MinLeafSize',params.minLS,...
+        'NumPredictorstoSample',params.numPTS);
+    oobErr = oobError(randomForest, 'Mode','ensemble');
+end
