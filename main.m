@@ -40,7 +40,20 @@ disp(size(test_table));
 % your findings
 
 cor = corrcoef(table2array(train_table));
-heatmap(cor);
+
+% Create the heatmap
+h = heatmap(cor);
+
+% Set the PaperPosition property of the figure
+set(gcf, 'PaperPosition', [0, 0, 100, 75]);
+
+% Add a title
+title('Correlation plot');
+
+% Save the heatmap as an image
+saveas(h, 'corrcoef.png');
+
+disp('Task2 Result:')
 disp(max(cor(1, :)));
 disp(min(cor(1, :)));
 
@@ -65,13 +78,15 @@ B = mnrfit(X_train, y_train);
 probabilities = mnrval(B, X_test);
 predictions = probabilities(:, 2) > 0.5; % Assuming binary classification
 
+
+disp('Task3 Result:')
 % Calculating accuracy rate
-accuracy = sum(predictions == y_test) / numel(y_test);
-fprintf('Accuracy Rate: %.2f%%\n', accuracy * 100);
+accuracy_3 = sum(predictions == y_test) / numel(y_test) * 100;
+fprintf('Accuracy Rate: %.2f%%\n', accuracy_3);
 
 % Calculating confusion matrix
-confusionMatrix = confusionmat(y_test, double(predictions));
-disp(confusionMatrix);
+confusionMatrix_3 = confusionmat(y_test, double(predictions));
+disp(confusionMatrix_3);
 
 %% Task4
 % Use the training sample and a logistic regression model which only included
@@ -96,13 +111,15 @@ B = mnrfit(X_train, y_train);
 probabilities = mnrval(B, X_test);
 predictions = probabilities(:, 2) > 0.5; % Assuming binary classification
 
+disp('Task4 Result:')
+
 % Calculating accuracy rate
-accuracy = sum(predictions == y_test) / numel(y_test);
-fprintf('Accuracy Rate: %.2f%%\n', accuracy * 100);
+accuracy_4 = sum(predictions == y_test) / numel(y_test) * 100;
+fprintf('Accuracy Rate: %.2f%%\n', accuracy_4);
 
 % Calculating confusion matrix
-confusionMatrix = confusionmat(y_test, double(predictions));
-disp(confusionMatrix);
+confusionMatrix_4 = confusionmat(y_test, double(predictions));
+disp(confusionMatrix_4);
 
 %% Task5
 % Use a boosted classification tree to train the model and then, similarly, report
@@ -114,18 +131,25 @@ y_train = categorical(table2array(train_table(:, 1)));
 X_test = table2array(test_table(:, 2:end));
 y_test = categorical(table2array(test_table(:, 1)));
 
-% t = templateTree('MaxNumSplits', 5, 'PredictorSelection','interaction-curvature','Reproducible', true); % using curvature algo when include categorical predictors
-% boostMdl = fitcensemble(X_train, y_train, 'Method', 'AdaBoostM1', 'Learners', t);
-treeMdl = fitctree(X_train, y_train);
+paramGrid = struct( ...
+    'Method', 'AdaBoostM1', ...
+    'NumLearningCycles', [50, 100, 200]);
+
+t = templateTree('MaxNumSplits', 10);
+treeMdl = fitcensemble(X_train, y_train, 'OptimizeHyperparameters','auto','Learners',t, ...
+    'HyperparameterOptimizationOptions',struct('AcquisitionFunctionName','expected-improvement-plus'));
+% Predict the result for the test data
 predictions = predict(treeMdl, X_test);
 
+disp('Task5 Result:')
+
 % Calculating accuracy rate
-accuracy = sum(predictions == y_test) / numel(y_test);
-fprintf('Accuracy Rate: %.2f%%\n', accuracy * 100);
+accuracy_5 = sum(predictions == y_test) / numel(y_test) * 100;
+fprintf('Accuracy Rate: %.2f%%\n', accuracy_5);
 
 % Calculating confusion matrix
-confusionMatrix = confusionmat(y_test, predictions);
-disp(confusionMatrix);
+confusionMatrix_5 = confusionmat(y_test, predictions);
+disp(confusionMatrix_5);
 
 %% Task6
 % Use a random forest to train the model and then, similarly, report the OOS
@@ -137,18 +161,46 @@ y_train = categorical(table2array(train_table(:, 1)));
 X_test = table2array(test_table(:, 2:end));
 y_test = categorical(table2array(test_table(:, 1)));
 
-t = templateTree('MaxNumSplits', 5, 'PredictorSelection','interaction-curvature','Reproducible', true);
-rfMdl = fitcensemble(X_train, y_train, 'Method', 'Bag', 'NumLearningCycles', 50, 'Learners', t);
-predictions = predict(boostMdl, X_test);
+X = train_table(:, [2:end, 1]);
+maxMinLS = 20;
+minLS = optimizableVariable('minLS',[1,maxMinLS],'Type','integer');
+numPTS = optimizableVariable('numPTS',[1,size(X,2)-1],'Type','integer');
+hyperparametersRF = [minLS; numPTS];
+
+results = bayesopt(@(params)oobErrRF(params,X),hyperparametersRF,...
+    'AcquisitionFunctionName','expected-improvement-plus','Verbose',1);
+
+bestOOBErr = results.MinObjective;
+bestHyperparameters = results.XAtMinObjective;
+
+numTrees = 300;
+rfMdl = TreeBagger(numTrees, X, 'Bankrupt_', 'Method','classification',...
+    'MinLeafSize',bestHyperparameters.minLS,...
+    'NumPredictorstoSample',bestHyperparameters.numPTS);
+predictions = predict(rfMdl, X_test);
+
+
+disp('Task6 Result:');
 
 % Calculating accuracy rate
-accuracy = sum(predictions == y_test) / numel(y_test);
-fprintf('Accuracy Rate: %.2f%%\n', accuracy * 100);
+accuracy_6 = sum(predictions == y_test) / numel(y_test) * 100;
+fprintf('Accuracy Rate: %.2f%%\n', accuracy_6);
 
 % Calculating confusion matrix
-confusionMatrix = confusionmat(y_test, predictions);
-disp(confusionMatrix);
+confusionMatrix_6 = confusionmat(y_test, categorical(predictions));
+disp(confusionMatrix_6);
+save('save.mat', 'accuracy_3', 'confusionMatrix_3', 'accuracy_4', 'confusionMatrix_4', ...
+    'accuracy_5', 'confusionMatrix_5', 'accuracy_6', 'confusionMatrix_6');
 
-%% Task7
-% Compare the results from different models. Comment on your findings.
-
+function oobErr = oobErrRF(params,X)
+    %oobErrRF Trains random forest and estimates out-of-bag quantile error
+    %   oobErr trains a random forest of 300 regression trees using the
+    %   predictor data in X and the parameter specification in params, and then
+    %   returns the out-of-bag quantile error based on the median. X is a table
+    %   and params is an array of OptimizableVariable objects corresponding to
+    %   the minimum leaf size and number of predictors to sample at each node.
+    randomForest = TreeBagger(300,X,'Bankrupt_','Method','classification',...
+        'OOBPrediction','on','MinLeafSize',params.minLS,...
+        'NumPredictorstoSample',params.numPTS);
+    oobErr = oobError(randomForest, 'Mode','ensemble');
+end
