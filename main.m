@@ -108,9 +108,29 @@ disp(confusionMatrix);
 % Use a boosted classification tree to train the model and then, similarly, report
 % the OOS confusion matrix and the accuracy rate.
 
+% Split the data into X_train, y_train, X_test, y_test
+X_train = table2array(train_table(:, 2:end));
+y_train = categorical(table2array(train_table(:, 1)));
+X_test = table2array(test_table(:, 2:end));
+y_test = categorical(table2array(test_table(:, 1)));
+
+t = templateTree('MaxNumSplits', 5, 'PredictorSelection','interaction-curvature','Reproducible', true); % using curvature algo when include categorical predictors
+boostMdl = fitcensemble(X_train, y_train, 'Method', 'AdaBoostM1', 'Learners', t);
+predictions = predict(boostMdl, X_test);
+
+% Calculating accuracy rate
+accuracy = sum(predictions == y_test) / numel(y_test);
+fprintf('Accuracy Rate: %.2f%%\n', accuracy * 100);
+
+% Calculating confusion matrix
+confusionMatrix = confusionmat(y_test, predictions);
+disp(confusionMatrix);
+
 %% Task6
 % Use a random forest to train the model and then, similarly, report the OOS
 % confusion matrix and the accuracy rate.
+
+
 
 %% Task7
 % Compare the results from different models. Comment on your findings.
