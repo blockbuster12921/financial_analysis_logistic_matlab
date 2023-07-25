@@ -174,10 +174,10 @@ bestOOBErr = results.MinObjective;
 bestHyperparameters = results.XAtMinObjective;
 
 numTrees = 300;
-Mdl = TreeBagger(numTrees, X, 'Bankrupt_', 'Method','classification',...
+rfMdl = TreeBagger(numTrees, X, 'Bankrupt_', 'Method','classification',...
     'MinLeafSize',bestHyperparameters.minLS,...
     'NumPredictorstoSample',bestHyperparameters.numPTS);
-predictions = predict(rfMdl, X_test);
+predictions = predict(rfMdl, categorical(X_test));
 
 
 disp('Task6 Result:');
