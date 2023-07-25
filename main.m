@@ -114,8 +114,6 @@ y_train = categorical(table2array(train_table(:, 1)));
 X_test = table2array(test_table(:, 2:end));
 y_test = categorical(table2array(test_table(:, 1)));
 
-% t = templateTree('MaxNumSplits', 5, 'PredictorSelection','interaction-curvature','Reproducible', true); % using curvature algo when include categorical predictors
-% boostMdl = fitcensemble(X_train, y_train, 'Method', 'AdaBoostM1', 'Learners', t);
 treeMdl = fitctree(X_train, y_train);
 predictions = predict(treeMdl, X_test);
 
