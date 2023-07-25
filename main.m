@@ -78,7 +78,31 @@ disp(confusionMatrix);
 % the 5 most correlated predictors with the y variable, to train the model. Then,
 % similarly, report the OOS confusion matrix and the accuracy rate.
 
+% Find the 5 most correlated predictors
+cor_loan_status = cor(1, :);
+[out, sorted_idx] = sort(cor_loan_status);
+top_idxes = sorted_idx(end - 6:end - 2);
 
+% Split the data into X_train, y_train, X_test, y_test
+X_train = table2array(train_table(:, top_idxes));
+y_train = categorical(table2array(train_table(:, 1)));
+X_test = table2array(test_table(:, top_idxes));
+y_test = table2array(test_table(:, 1));
+
+% Training the logistic regression model
+B = mnrfit(X_train, y_train);
+
+% Predicting on the test set
+probabilities = mnrval(B, X_test);
+predictions = probabilities(:, 2) > 0.5; % Assuming binary classification
+
+% Calculating accuracy rate
+accuracy = sum(predictions == y_test) / numel(y_test);
+fprintf('Accuracy Rate: %.2f%%\n', accuracy * 100);
+
+% Calculating confusion matrix
+confusionMatrix = confusionmat(y_test, double(predictions));
+disp(confusionMatrix);
 
 %% Task5
 % Use a boosted classification tree to train the model and then, similarly, report
