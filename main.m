@@ -51,10 +51,34 @@ disp(min(cor(1, :)));
 % then we predict this company will be bankrupt) and show the confusion matrix.
 % Report the accuracy rate for the out-of-sample (OOS) prediction.
 
+% Split the data into X_train, y_train, X_test, y_test
+X_train = table2array(train_table(:, 2:end));
+y_train = categorical(table2array(train_table(:, 1)));
+X_test = table2array(test_table(:, 2:end));
+y_test = table2array(test_table(:, 1));
+
+
+% Training the logistic regression model
+B = mnrfit(X_train, y_train);
+
+% Predicting on the test set
+probabilities = mnrval(B, X_test);
+predictions = probabilities(:, 2) > 0.5; % Assuming binary classification
+
+% Calculating accuracy rate
+accuracy = sum(predictions == y_test) / numel(y_test);
+fprintf('Accuracy Rate: %.2f%%\n', accuracy * 100);
+
+% Calculating confusion matrix
+confusionMatrix = confusionmat(y_test, double(predictions));
+disp(confusionMatrix);
+
 %% Task4
 % Use the training sample and a logistic regression model which only included
 % the 5 most correlated predictors with the y variable, to train the model. Then,
 % similarly, report the OOS confusion matrix and the accuracy rate.
+
+
 
 %% Task5
 % Use a boosted classification tree to train the model and then, similarly, report
