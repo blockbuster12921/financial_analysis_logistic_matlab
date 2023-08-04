@@ -86,7 +86,8 @@ fprintf('Accuracy Rate: %.2f%%\n', accuracy_3);
 
 % Calculating confusion matrix
 confusionMatrix_3 = confusionmat(y_test, double(predictions));
-disp(confusionMatrix_3);
+% disp(confusionMatrix_3);
+showConfusionMatrixChart(confusionMatrix_3);
 
 %% Task4
 % Use the training sample and a logistic regression model which only included
@@ -119,7 +120,7 @@ fprintf('Accuracy Rate: %.2f%%\n', accuracy_4);
 
 % Calculating confusion matrix
 confusionMatrix_4 = confusionmat(y_test, double(predictions));
-disp(confusionMatrix_4);
+showConfusionMatrixChart(confusionMatrix_4);
 
 %% Task5
 % Use a boosted classification tree to train the model and then, similarly, report
@@ -149,7 +150,7 @@ fprintf('Accuracy Rate: %.2f%%\n', accuracy_5);
 
 % Calculating confusion matrix
 confusionMatrix_5 = confusionmat(y_test, predictions);
-disp(confusionMatrix_5);
+showConfusionMatrixChart(confusionMatrix_5);
 
 %% Task6
 % Use a random forest to train the model and then, similarly, report the OOS
@@ -188,7 +189,9 @@ fprintf('Accuracy Rate: %.2f%%\n', accuracy_6);
 
 % Calculating confusion matrix
 confusionMatrix_6 = confusionmat(y_test, categorical(predictions));
-disp(confusionMatrix_6);
+showConfusionMatrixChart(confusionMatrix_6);
+
+% Save the result in mat files
 save('save.mat', 'accuracy_3', 'confusionMatrix_3', 'accuracy_4', 'confusionMatrix_4', ...
     'accuracy_5', 'confusionMatrix_5', 'accuracy_6', 'confusionMatrix_6');
 
@@ -203,4 +206,9 @@ function oobErr = oobErrRF(params,X)
         'OOBPrediction','on','MinLeafSize',params.minLS,...
         'NumPredictorstoSample',params.numPTS);
     oobErr = oobError(randomForest, 'Mode','ensemble');
+end
+
+function fig = showConfusionMatrixChart(confMat)
+    figure
+    cm = confusionchart(confMat);
 end
