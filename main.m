@@ -42,7 +42,12 @@ disp(size(test_table));
 cor = corrcoef(table2array(train_table));
 
 % Create the heatmap
-h = heatmap(cor);
+h = heatmap(train_table.Properties.VariableNames, train_table.Properties.VariableNames, cor);
+
+% Choose a colormap (you can use any MATLAB built-in colormap or create a custom one)
+colormap('jet');  % 'jet' is just one of many built-in colormaps
+clim([0, 1]);  % Set the range of values to map to the colormap (adjust as needed)
+colorbar;
 
 % Set the PaperPosition property of the figure
 set(gcf, 'PaperPosition', [0, 0, 100, 75]);
@@ -51,7 +56,7 @@ set(gcf, 'PaperPosition', [0, 0, 100, 75]);
 title('Correlation plot');
 
 % Save the heatmap as an image
-saveas(h, 'corrcoef.png');
+saveas(h, 'result.png');
 
 disp('Task2 Result:')
 disp(max(cor(1, :)));
